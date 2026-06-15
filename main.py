@@ -135,3 +135,83 @@ classes = np.unique(y_train)
 weights = compute_class_weight("balanced", classes=classes, y=y_train)
 class_weight = dict(zip(classes, weights))
 print(f"\nClass weights: {class_weight}")
+
+# ============== Métricas
+def get_metrics_with_ci(y_true, y_probs, n_bootstrap=1000, ci=0.95, seed=SEED):
+    """
+    Calcula AUROC, AUPRC e PPV@90Recall com intervalos de confiança via bootstrap.
+    seed: usa SEED global do projeto para reprodutibilidade total.
+    """
+
+    def calculate_ppv_at_recall(y_t, y_p, target_recall=0.90):
+        precisions, recalls, _ = precision_recall_curve(y_t, y_p)
+        idx = np.where(recalls >= target_recall)[0]
+        if len(idx) == 0:
+            return 0.0
+        return float(precisions[idx[-1]])
+
+    boot_auroc, boot_auprc, boot_ppv90 = [], [], []
+    print(
+        f"Calculando métricas com {n_bootstrap} amostras de bootstrap (seed={seed})...")
+
+    for i in range(n_bootstrap):
+        # seed + i → sequência determinística e única por iteração
+        y_t_boot, y_p_boot = resample(y_true, y_probs, random_state=seed + i)
+
+        if len(np.unique(y_t_boot)) < 2:
+            continue
+
+        boot_auroc.append(roc_auc_score(y_t_boot, y_p_boot))
+        boot_auprc.append(average_precision_score(y_t_boot, y_p_boot))
+        boot_ppv90.append(calculate_ppv_at_recall(y_t_boot, y_p_boot))
+
+    lower_p = ((1 - ci) / 2) * 100
+    upper_p = (ci + (1 - ci) / 2) * 100
+
+    results = {
+        "Metric":        ["AUROC", "AUPRC", "PPV@90Recall"],
+        "Value":         [
+            roc_auc_score(y_true, y_probs),
+            average_precision_score(y_true, y_probs),
+            calculate_ppv_at_recall(y_true, y_probs),
+        ],
+        "CI Lower": [
+            np.percentile(boot_auroc, lower_p),
+            np.percentile(boot_auprc, lower_p),
+            np.percentile(boot_ppv90, lower_p),
+        ],
+        "CI Upper": [
+            np.percentile(boot_auroc, upper_p),
+            np.percentile(boot_auprc, upper_p),
+            np.percentile(boot_ppv90, upper_p),
+        ],
+    }
+    return pd.DataFrame(results)
+
+
+def full_evaluation_report(y_true, y_probs, threshold=0.5, seed=SEED):
+    """
+    Relatório completo: classificação, confusão e CIs com bootstrap reprodutível.
+    y_probs: saída de model.predict() — aceita shape (N,) ou (N, 1).
+    """
+    # Garante shape (N,) independente do que o Keras retornar
+    y_probs = np.array(y_probs).ravel()
+    y_pred = (y_probs >= threshold).astype(int)
+
+    print("-" * 40)
+    print("RELATÓRIO DE CLASSIFICAÇÃO")
+    print("-" * 40)
+    print(classification_report(y_true, y_pred, zero_division=0))
+
+    print("MATRIZ DE CONFUSÃO")
+    cm = confusion_matrix(y_true, y_pred)
+    print(cm)
+    tn, fp, fn, tp = cm.ravel()
+    print(f"  TN={tn}  FP={fp}  FN={fn}  TP={tp}")
+
+    print(f"\nAcurácia : {accuracy_score(y_true, y_pred):.4f}")
+    print(f"F1-Score : {f1_score(y_true, y_pred, zero_division=0):.4f}")
+
+    df_ci = get_metrics_with_ci(y_true, y_probs, seed=seed)
+    print(f"\nMÉTRICAS COM IC {int(df_ci.shape[0] > 0 and 95)}%")
+    print(df_ci.to_string(index=False, float_format="%.4f"))

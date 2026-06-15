@@ -1,0 +1,29 @@
+========================================
+CNN Inicial
+========================================
+----------------------------------------
+RELATÓRIO DE CLASSIFICAÇÃO
+----------------------------------------
+              precision    recall  f1-score   support
+
+           0       0.95      0.91      0.93       294
+           1       0.11      0.19      0.14        16
+
+    accuracy                           0.88       310
+   macro avg       0.53      0.55      0.54       310
+weighted avg       0.91      0.88      0.89       310
+
+MATRIZ DE CONFUSÃO
+[[269  25]
+ [ 13   3]]
+  TN=269  FP=25  FN=13  TP=3
+
+Acurácia : 0.8774
+F1-Score : 0.1364
+Calculando métricas com 1000 amostras de bootstrap (seed=42)...
+
+MÉTRICAS COM IC 95%
+      Metric  Value  CI Lower  CI Upper
+       AUROC 0.7579    0.6487    0.8536
+       AUPRC 0.2027    0.0679    0.3968
+PPV@90Recall 0.0987    0.0430    0.1887

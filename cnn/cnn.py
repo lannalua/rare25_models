@@ -1,3 +1,5 @@
+from tensorflow.keras import layers
+import tensorflow as tf
 from main import *
 # ====MODELO CNN — inicializadores com seed para reprodutibilidade
 
@@ -95,3 +97,38 @@ print("=" * 40)
 print("CNN")
 print("=" * 40)
 full_evaluation_report(y_test, y_probs_cnn, threshold=0.5, seed=SEED)
+
+# ======= CNN + Data Augmentation
+# ============================================================
+# TREINO 2 — com augmentation seletivo
+# RODAR APÓS o treino 1 já ter sido avaliado e salvo
+# ============================================================
+
+# 1. Reseta todos os geradores de aleatoriedade
+set_global_seed(SEED)
+
+# 2. Reconstrói o modelo do zero — pesos iniciais idênticos ao treino 1
+#    Isso garante que a única variável entre os dois treinos é o augmentation
+model_aug = build_cnn(SEED)
+
+# 3. Reconstrói o callback — o EarlyStopping guarda estado interno
+#    (melhor val_loss, contador de patience) do treino anterior
+early_stop_aug = EarlyStopping(
+    monitor="val_loss",
+    patience=5,
+    restore_best_weights=True
+)
+
+# 4. Treina com o dataset aumentado
+history_aug = model_aug.fit(
+    train_ds,                      # dataset com augmentation seletivo
+    validation_data=val_ds,
+    epochs=EPOCHS,
+    class_weight=class_weight,
+    callbacks=[early_stop_aug],
+    verbose=1,
+)
+
+# 5. Avalia
+y_probs_aug = model_aug.predict(test_ds).ravel()
+full_evaluation_report(y_test, y_probs_aug, threshold=0.5, seed=SEED)

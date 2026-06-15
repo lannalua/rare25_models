@@ -1,4 +1,5 @@
 #importação do dataset rare25 via kaggle
+from tensorflow.keras.utils import Sequence
 import time
 from sklearn.utils.class_weight import compute_class_weight
 from tensorflow.keras.callbacks import EarlyStopping
@@ -13,6 +14,7 @@ from sklearn.model_selection import train_test_split
 from datasets import load_from_disk
 import matplotlib.pyplot as plt
 import numpy as np
+from tensorflow.keras import layers
 
 caminho_do_dataset = "/content/RARE25-train/train"
 
@@ -215,3 +217,148 @@ def full_evaluation_report(y_true, y_probs, threshold=0.5, seed=SEED):
     df_ci = get_metrics_with_ci(y_true, y_probs, seed=seed)
     print(f"\nMÉTRICAS COM IC {int(df_ci.shape[0] > 0 and 95)}%")
     print(df_ci.to_string(index=False, float_format="%.4f"))
+
+# ============================================================
+# AUGMENTATION SELETIVO — apenas classe positiva (label = 1)
+# ============================================================
+
+BATCH_SIZE = 32
+AUTOTUNE = tf.data.AUTOTUNE
+
+# Augmentation já definido anteriormente (sem RandomBrightness)
+data_augmentation = tf.keras.Sequential([
+    layers.RandomRotation(0.2),
+    layers.RandomFlip("horizontal_and_vertical"),
+    layers.RandomZoom(0.1),
+    layers.RandomContrast(0.2),
+    layers.RandomTranslation(0.1, 0.1),
+], name="augmentation")
+
+
+def augment_positive_only(image, label):
+    """
+    Aplica augmentation apenas se label == 1.
+    tf.cond é necessário porque o grafo do TF não aceita if Python normal
+    sobre tensores — o valor de label só é conhecido em runtime.
+    """
+    image = tf.cond(
+        tf.equal(label, 1),
+        true_fn=lambda: data_augmentation(image, training=True),
+        false_fn=lambda: image
+    )
+    return image, label
+
+
+def build_dataset(X, y, shuffle=False, augment=False):
+    """
+    Constrói um tf.data.Dataset a partir de arrays NumPy.
+
+    Parâmetros
+    ----------
+    X       : array (N, H, W, 3)
+    y       : array (N,)
+    shuffle : embaralha a cada época — usar só no treino
+    augment : ativa augmentation seletivo — usar só no treino
+    """
+    ds = tf.data.Dataset.from_tensor_slices((X, y))
+
+    if shuffle:
+        # buffer_size = len(X) garante embaralhamento completo
+        ds = ds.shuffle(buffer_size=len(X), seed=SEED,
+                        reshuffle_each_iteration=True)
+
+    if augment:
+        ds = ds.map(augment_positive_only, num_parallel_calls=AUTOTUNE)
+
+    ds = ds.batch(BATCH_SIZE).prefetch(AUTOTUNE)
+    return ds
+
+
+# ============================================================
+# DATASETS
+# ============================================================
+train_ds = build_dataset(X_train, y_train, shuffle=True,  augment=True)
+val_ds = build_dataset(X_val,   y_val,   shuffle=False, augment=False)
+test_ds = build_dataset(X_test,  y_test,  shuffle=False, augment=False)
+
+# ================================================================
+# Balanceamento de Batch
+# ================================================================
+
+
+class BalancedBatchGenerator(Sequence):
+    """
+    Gera batches com 50% positivo / 50% negativo.
+    Reprodutível via seed — cada época embaralha de forma
+    determinística mas diferente das anteriores.
+    """
+
+    def __init__(self, X, y, batch_size=32, seed=SEED):
+        self.X = X
+        self.y = y
+        self.batch_size = batch_size
+        self.seed = seed
+        self.n_per_class = batch_size // 2
+
+        self.indices_pos = np.where(y == 1)[0]
+        self.indices_neg = np.where(y == 0)[0]
+
+        # Número de steps: quantas vezes a classe minoritária
+        # é coberta com batches balanceados
+        self._n_steps = int(np.ceil(len(self.indices_pos) / self.n_per_class))
+
+        # RNG próprio — isolado do estado global do NumPy
+        self.rng = np.random.default_rng(seed)
+
+    def __len__(self):
+        return self._n_steps
+
+    def __getitem__(self, index):
+        # seed por step e por época para sequência determinística
+        step_seed = self.seed + self._epoch * 10000 + index
+        rng = np.random.default_rng(step_seed)
+
+        idx_pos = rng.choice(self.indices_pos, self.n_per_class, replace=True)
+        idx_neg = rng.choice(self.indices_neg, self.n_per_class, replace=True)
+
+        batch_indices = np.concatenate([idx_pos, idx_neg])
+        rng.shuffle(batch_indices)
+
+        return self.X[batch_indices], self.y[batch_indices]
+
+    def on_epoch_end(self):
+        """Chamado automaticamente pelo Keras ao fim de cada época."""
+        self._epoch += 1
+
+    def on_epoch_begin(self):
+        self._epoch = getattr(self, "_epoch", 0)
+
+# ============================================================
+# INTEGRAÇÃO COM O AUGMENTATION SELETIVO
+# ============================================================
+# O generator retorna arrays NumPy por batch — para aplicar
+# o augmentation seletivo, convertemos para tf.data via
+# from_generator depois de instanciar.
+
+
+train_generator = BalancedBatchGenerator(
+    X_train, y_train, batch_size=BATCH_SIZE, seed=SEED
+)
+
+# Converte para tf.data mantendo o augmentation seletivo
+train_ds_balanced = tf.data.Dataset.from_generator(
+    generator=lambda: train_generator,
+    output_signature=(
+        tf.TensorSpec(shape=(None, 224, 224, 3), dtype=tf.float32),
+        tf.TensorSpec(shape=(None,),              dtype=tf.int64),
+    )
+).map(
+    # augment_positive_only opera imagem a imagem — unbatch/map/batch
+    lambda X_batch, y_batch: tf.map_fn(
+        lambda pair: augment_positive_only(pair[0], pair[1]),
+        (X_batch, y_batch),
+        fn_output_signature=(tf.float32, tf.int64)
+    ),
+    num_parallel_calls=AUTOTUNE
+).prefetch(AUTOTUNE)
+

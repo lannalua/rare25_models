@@ -1,4 +1,14 @@
 #importação do dataset rare25 via kaggle
+import time
+from sklearn.utils.class_weight import compute_class_weight
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.initializers import GlorotUniform, Zeros
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout
+from tensorflow.keras.models import Sequential
+import tensorflow as tf
+import random
+import os
 from sklearn.model_selection import train_test_split
 from datasets import load_from_disk
 import matplotlib.pyplot as plt
@@ -51,52 +61,77 @@ plt.bar(['Negativo (0)', 'Positivo (1)'], [contagem_0, contagem_1])
 plt.title("Distribuição das Classes")
 plt.show()
 
+# ------- SEED + SPLIT
 
-# ---------- Split do dataset
+SEED = 42
 
-# Configurações iniciais
+
+def set_global_seed(seed: int = SEED):
+    """
+    Fixa todas as fontes de aleatoriedade do pipeline.
+    Chamar antes de qualquer import de TF ou criação de modelo.
+    """
+    os.environ["PYTHONHASHSEED"] = str(seed)        # hash do Python
+    random.seed(seed)                                # módulo random padrão
+    import numpy as np
+    np.random.seed(seed)                             # NumPy
+    import tensorflow as tf
+    tf.random.set_seed(seed)                         # TensorFlow / Keras
+    # Elimina variações não-determinísticas do cuDNN (custo de ~5-15% de performance)
+    tf.config.experimental.enable_op_determinism()
+
+
+set_global_seed(SEED)
+
 IMG_SIZE = (224, 224)
-N = len(dataset)
+BATCH_SIZE = 32
+EPOCHS = 10
+LR = 1e-4
 
-# 1. Preparação dos arrays (X e y)
+# ======= PREPARAÇÃO DOS ARRAYS
+
+N = len(dataset)
 X = np.zeros((N, IMG_SIZE[0], IMG_SIZE[1], 3), dtype=np.float32)
 y = np.array(dataset["label"], dtype=np.int64)
 
 for i in range(N):
-    # Converte para RGB para garantir 3 canais e redimensiona
     img = dataset[i]["image"].convert("RGB").resize(IMG_SIZE)
-    # Normalização para o intervalo [0, 1]
     X[i] = np.array(img, dtype=np.float32) / 255.0
 
-# 2. Primeiro Split: Separa Treino (80%) e o restante (20%)
-# O stratify=y garante que os 5% de casos de câncer sejam distribuídos proporcionalmente
+# ======= SPLIT DETERMINÍSTICO
+
 X_train, X_temp, y_train, y_temp = train_test_split(
-    X, y, test_size=0.20, random_state=42, stratify=y
+    X, y,
+    test_size=0.20,
+    random_state=SEED,   
+    stratify=y
 )
-
-# 3. Segundo Split: Divide os 20% restantes ao meio (10% Validação e 10% Teste)
-# Usamos stratify=y_temp para manter a proporção nos novos subconjuntos
 X_val, X_test, y_val, y_test = train_test_split(
-    X_temp, y_temp, test_size=0.50, random_state=42, stratify=y_temp
+    X_temp, y_temp,
+    test_size=0.50,
+    random_state=SEED,   
+    stratify=y_temp
 )
-
-# 4. Verificação dos resultados
 
 
 def print_stats(name, y_data):
     count = np.bincount(y_data)
-    percent_pos = (count[1] / len(y_data)) * 100
-    print(
-        f"{name:<10} | Total: {len(y_data):<5} | Neg(0): {count[0]:<5} | Pos(1): {count[1]:<4} | % Pos: {percent_pos:.2f}%")
+    pct = (count[1] / len(y_data)) * 100
+    print(f"{name:<10} | Total: {len(y_data):<5} | Neg(0): {count[0]:<5} "
+          f"| Pos(1): {count[1]:<4} | % Pos: {pct:.2f}%")
 
 
 print("-" * 65)
-print(f"{'Conjunto':<10} | {'Total':<6} | {'Classe 0':<8} | {'Classe 1':<7} | {'Prop. Positiva'}")
+print(f"{'Conjunto':<10} | {'Total':<6} | {'Classe 0':<8} | {'Classe 1':<7} | Prop. Positiva")
 print("-" * 65)
-print_stats("Treino", y_train)
+print_stats("Treino",    y_train)
 print_stats("Validação", y_val)
-print_stats("Teste", y_test)
+print_stats("Teste",     y_test)
 print("-" * 65)
+print(f"Shape X_train: {X_train.shape}")
 
-# Verificação de shape para conferir se as dimensões estão corretas para o modelo
-print(f"Shape final do X_train: {X_train.shape}")
+# ================ CLASS WEIGHT 
+classes = np.unique(y_train)
+weights = compute_class_weight("balanced", classes=classes, y=y_train)
+class_weight = dict(zip(classes, weights))
+print(f"\nClass weights: {class_weight}")

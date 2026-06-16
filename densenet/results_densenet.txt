@@ -1,0 +1,211 @@
+Tempo total DenseNet S1: 7155.51s
+=============================================
+DenseNet-121 S1 — class weight
+=============================================
+----------------------------------------
+RELATÓRIO DE CLASSIFICAÇÃO
+----------------------------------------
+              precision    recall  f1-score   support
+
+           0       0.95      0.93      0.94       294
+           1       0.09      0.12      0.11        16
+
+    accuracy                           0.89       310
+   macro avg       0.52      0.53      0.52       310
+weighted avg       0.91      0.89      0.90       310
+
+MATRIZ DE CONFUSÃO
+[[274  20]
+ [ 14   2]]
+  TN=274  FP=20  FN=14  TP=2
+
+Acurácia : 0.8903
+F1-Score : 0.1053
+Calculando métricas com 1000 amostras de bootstrap (seed=42)...
+
+MÉTRICAS COM IC 95%
+      Metric  Value  CI Lower  CI Upper
+       AUROC 0.6971    0.5646    0.8200
+       AUPRC 0.1276    0.0560    0.2917
+PPV@90Recall 0.0685    0.0395    0.1333
+
+
+=============================================
+DenseNet-121 S2 — augmentation
+=============================================
+Tempo total DenseNet S2: 8916.82s
+----------------------------------------
+RELATÓRIO DE CLASSIFICAÇÃO
+----------------------------------------
+              precision    recall  f1-score   support
+
+           0       0.95      1.00      0.97       294
+           1       0.50      0.06      0.11        16
+
+    accuracy                           0.95       310
+   macro avg       0.73      0.53      0.54       310
+weighted avg       0.93      0.95      0.93       310
+
+MATRIZ DE CONFUSÃO
+[[293   1]
+ [ 15   1]]
+  TN=293  FP=1  FN=15  TP=1
+
+Acurácia : 0.9484
+F1-Score : 0.1111
+Calculando métricas com 1000 amostras de bootstrap (seed=42)...
+
+MÉTRICAS COM IC 95%
+      Metric  Value  CI Lower  CI Upper
+       AUROC 0.7181    0.5713    0.8388
+       AUPRC 0.1583    0.0636    0.3691
+PPV@90Recall 0.0725    0.0334    0.1452
+
+=============================================
+DenseNet-121 S3 — balanced batch
+=============================================
+Tempo total DenseNet S3: 1753.36s
+----------------------------------------
+RELATÓRIO DE CLASSIFICAÇÃO
+----------------------------------------
+              precision    recall  f1-score   support
+
+           0       0.00      0.00      0.00       294
+           1       0.05      1.00      0.10        16
+
+    accuracy                           0.05       310
+   macro avg       0.03      0.50      0.05       310
+weighted avg       0.00      0.05      0.01       310
+
+MATRIZ DE CONFUSÃO
+[[  0 294]
+ [  0  16]]
+  TN=0  FP=294  FN=0  TP=16
+
+Acurácia : 0.0516
+F1-Score : 0.0982
+Calculando métricas com 1000 amostras de bootstrap (seed=42)...
+
+MÉTRICAS COM IC 95%
+      Metric  Value  CI Lower  CI Upper
+       AUROC 0.7676    0.6278    0.8870
+       AUPRC 0.1708    0.0850    0.3416
+PPV@90Recall 0.0602    0.0353    0.1715
+
+=============================================
+RESUMO DENSENET
+=============================================
+DenseNet S1 — épocas totais: 15  | melhor val_loss: 0.5141
+DenseNet S2 — épocas totais: 18  | melhor val_loss: 0.2668
+DenseNet S3 — épocas totais: 15  | melhor val_loss: 2.5698
+
+Parâmetros treináveis fase 1 : 1,323,521
+TensorFlow: 2.20.0
+GPU       : []
+
+
+=============================================
+DenseNet-121 S1 — class weight
+=============================================
+Tempo total DenseNet S1: 270.57s
+----------------------------------------
+RELATÓRIO DE CLASSIFICAÇÃO
+----------------------------------------
+              precision    recall  f1-score   support
+
+           0       0.95      0.93      0.94       294
+           1       0.09      0.12      0.11        16
+
+    accuracy                           0.89       310
+   macro avg       0.52      0.53      0.52       310
+weighted avg       0.91      0.89      0.90       310
+
+MATRIZ DE CONFUSÃO
+[[274  20]
+ [ 14   2]]
+  TN=274  FP=20  FN=14  TP=2
+
+Acurácia : 0.8903
+F1-Score : 0.1053
+Calculando métricas com 1000 amostras de bootstrap (seed=42)...
+
+MÉTRICAS COM IC 95%
+      Metric  Value  CI Lower  CI Upper
+       AUROC 0.6971    0.5646    0.8200
+       AUPRC 0.1276    0.0560    0.2917
+PPV@90Recall 0.0685    0.0395    0.1333
+
+
+=============================================
+DenseNet-121 S2 — augmentation
+=============================================
+Tempo total DenseNet S2: 367.56s
+----------------------------------------
+RELATÓRIO DE CLASSIFICAÇÃO
+----------------------------------------
+              precision    recall  f1-score   support
+
+           0       0.95      1.00      0.97       294
+           1       0.50      0.06      0.11        16
+
+    accuracy                           0.95       310
+   macro avg       0.73      0.53      0.54       310
+weighted avg       0.93      0.95      0.93       310
+
+MATRIZ DE CONFUSÃO
+[[293   1]
+ [ 15   1]]
+  TN=293  FP=1  FN=15  TP=1
+
+Acurácia : 0.9484
+F1-Score : 0.1111
+Calculando métricas com 1000 amostras de bootstrap (seed=42)...
+
+MÉTRICAS COM IC 95%
+      Metric  Value  CI Lower  CI Upper
+       AUROC 0.7177    0.5705    0.8384
+       AUPRC 0.1580    0.0633    0.3687
+PPV@90Recall 0.0721    0.0334    0.1444
+
+
+=============================================
+DenseNet-121 S3 — balanced batch
+=============================================
+Tempo total DenseNet S3: 119.67s
+----------------------------------------
+RELATÓRIO DE CLASSIFICAÇÃO
+----------------------------------------
+              precision    recall  f1-score   support
+
+           0       0.00      0.00      0.00       294
+           1       0.05      1.00      0.10        16
+
+    accuracy                           0.05       310
+   macro avg       0.03      0.50      0.05       310
+weighted avg       0.00      0.05      0.01       310
+
+MATRIZ DE CONFUSÃO
+[[  0 294]
+ [  0  16]]
+  TN=0  FP=294  FN=0  TP=16
+
+Acurácia : 0.0516
+F1-Score : 0.0982
+Calculando métricas com 1000 amostras de bootstrap (seed=42)...
+
+MÉTRICAS COM IC 95%
+      Metric  Value  CI Lower  CI Upper
+       AUROC 0.7668    0.6283    0.8849
+       AUPRC 0.1707    0.0845    0.3440
+PPV@90Recall 0.0602    0.0353    0.1695
+
+=============================================
+RESUMO DENSENET
+=============================================
+DenseNet S1 — épocas totais: 15  | melhor val_loss: 0.5141
+DenseNet S2 — épocas totais: 18  | melhor val_loss: 0.2674
+DenseNet S3 — épocas totais: 15  | melhor val_loss: 2.5698
+
+Parâmetros treináveis fase 1 : 1,323,521
+TensorFlow: 2.20.0
+GPU       : [PhysicalDevice(name='/physical_device:GPU:0', device_type='GPU')]

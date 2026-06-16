@@ -106,3 +106,38 @@ GPU        : []
 Parâmetros treináveis — S1: 23,907,521
 
 Arquivos salvos com sucesso.
+
+
+COM -20 DE UNFREEZING
+
+
+=============================================
+DenseNet-121 S1 — class weight
+=============================================
+Tempo total DenseNet S1: 270.57s
+----------------------------------------
+RELATÓRIO DE CLASSIFICAÇÃO
+----------------------------------------
+              precision    recall  f1-score   support
+
+           0       0.95      0.93      0.94       294
+           1       0.09      0.12      0.11        16
+
+    accuracy                           0.89       310
+   macro avg       0.52      0.53      0.52       310
+weighted avg       0.91      0.89      0.90       310
+
+MATRIZ DE CONFUSÃO
+[[274  20]
+ [ 14   2]]
+  TN=274  FP=20  FN=14  TP=2
+
+Acurácia : 0.8903
+F1-Score : 0.1053
+Calculando métricas com 1000 amostras de bootstrap (seed=42)...
+
+MÉTRICAS COM IC 95%
+      Metric  Value  CI Lower  CI Upper
+       AUROC 0.6971    0.5646    0.8200
+       AUPRC 0.1276    0.0560    0.2917
+PPV@90Recall 0.0685    0.0395    0.1333

@@ -1,0 +1,27 @@
+GRID SEARCH
+------------------------------
+RELATÓRIO DE CLASSIFICAÇÃO
+------------------------------
+              precision    recall  f1-score   support
+
+           0       0.98      0.98      0.98       294
+           1       0.67      0.62      0.65        16
+
+    accuracy                           0.96       310
+   macro avg       0.82      0.80      0.81       310
+weighted avg       0.96      0.96      0.96       310
+
+
+MATRIZ DE CONFUSÃO
+[[289   5]
+ [  6  10]]
+
+OUTRAS MÉTRICAS
+Acurácia: 0.9645
+Calculando métricas com 1000 amostras de bootstrap...
+
+TABELA DE MÉTRICAS COM INTERVALO DE CONFIANÇA (CI)
+      Metric    Value  95% CI Lower  95% CI Upper
+       AUROC 0.926446      0.842007      0.989766
+       AUPRC 0.715642      0.474733      0.903306
+PPV@90Recall 0.116279      0.070299      0.782609

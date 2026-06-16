@@ -1,6 +1,7 @@
 # ============================================================
 # DENSENET-121 — build function com transfer learning
 # ============================================================
+from tensorflow.keras.applications.densenet import preprocess_input as dn_preprocess #type:ignore  
 from main import *
 import tensorflow as tf
 from tensorflow.keras import layers
@@ -196,3 +197,70 @@ full_evaluation_report(y_test, y_probs_dn_s1, threshold=0.5, seed=SEED)
 train_ds = build_dataset(X_train, y_train, shuffle=True,  augment=True)
 val_ds = build_dataset(X_val,   y_val,   shuffle=False, augment=False)
 test_ds = build_dataset(X_test,  y_test,  shuffle=False, augment=False)
+
+class BalancedBatchGenerator(Sequence):
+    def __init__(self, X, y, batch_size=32, seed=SEED, preprocess_fn=None):
+        self.X = X
+        self.y = y
+        self.batch_size = batch_size
+        self.seed = seed
+        self.n_per_class = batch_size // 2
+        self._epoch = 0
+        self.preprocess_fn = preprocess_fn   # <-- novo parâmetro
+
+        self.indices_pos = np.where(y == 1)[0]
+        self.indices_neg = np.where(y == 0)[0]
+        self._n_steps = int(np.ceil(len(self.indices_pos) / self.n_per_class))
+        self.rng = np.random.default_rng(seed)
+
+    def __getitem__(self, index):
+        step_seed = self.seed + self._epoch * 10000 + index
+        rng = np.random.default_rng(step_seed)
+
+        idx_pos = rng.choice(self.indices_pos, self.n_per_class, replace=True)
+        idx_neg = rng.choice(self.indices_neg, self.n_per_class, replace=True)
+
+        batch_indices = np.concatenate([idx_pos, idx_neg])
+        rng.shuffle(batch_indices)
+
+        X_batch = self.X[batch_indices]
+
+        # Desfaz o /255.0 e aplica o preprocess correto da arquitetura
+        if self.preprocess_fn is not None:
+            X_batch = self.preprocess_fn(X_batch * 255.0)
+
+        return X_batch, self.y[batch_indices]
+
+    def __len__(self):
+        return self._n_steps
+
+    def on_epoch_end(self):
+        self._epoch += 1
+# ============================================================
+# INTEGRAÇÃO COM O AUGMENTATION SELETIVO
+# ============================================================
+# O generator retorna arrays NumPy por batch — para aplicar
+# o augmentation seletivo, convertemos para tf.data via
+# from_generator depois de instanciar.
+
+
+train_generator = BalancedBatchGenerator(
+    X_train, y_train, batch_size=BATCH_SIZE, seed=SEED, preprocess_fn=dn_preprocess
+)
+
+# Converte para tf.data mantendo o augmentation seletivo
+train_ds_balanced = tf.data.Dataset.from_generator(
+    generator=lambda: train_generator,
+    output_signature=(
+        tf.TensorSpec(shape=(None, 224, 224, 3), dtype=tf.float32),
+        tf.TensorSpec(shape=(None,),              dtype=tf.int64),
+    )
+).map(
+    # augment_positive_only opera imagem a imagem — unbatch/map/batch
+    lambda X_batch, y_batch: tf.map_fn(
+        lambda pair: augment_positive_only(pair[0], pair[1]),
+        (X_batch, y_batch),
+        fn_output_signature=(tf.float32, tf.int64)
+    ),
+    num_parallel_calls=AUTOTUNE
+).prefetch(AUTOTUNE)

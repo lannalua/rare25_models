@@ -141,3 +141,108 @@ MÉTRICAS COM IC 95%
        AUROC 0.6971    0.5646    0.8200
        AUPRC 0.1276    0.0560    0.2917
 PPV@90Recall 0.0685    0.0395    0.1333
+
+COM GPU
+
+========================================
+CNN
+========================================
+----------------------------------------
+Tempo total de treino: 53.80s
+RELATÓRIO DE CLASSIFICAÇÃO
+----------------------------------------
+              precision    recall  f1-score   support
+
+           0       0.95      0.91      0.93       294
+           1       0.11      0.19      0.14        16
+
+    accuracy                           0.88       310
+   macro avg       0.53      0.55      0.54       310
+weighted avg       0.91      0.88      0.89       310
+
+MATRIZ DE CONFUSÃO
+[[269  25]
+ [ 13   3]]
+  TN=269  FP=25  FN=13  TP=3
+
+Acurácia : 0.8774
+F1-Score : 0.1364
+Calculando métricas com 1000 amostras de bootstrap (seed=42)...
+
+MÉTRICAS COM IC 95%
+      Metric  Value  CI Lower  CI Upper
+       AUROC 0.7581    0.6491    0.8536
+       AUPRC 0.2027    0.0679    0.3968
+PPV@90Recall 0.0987    0.0430    0.1887
+
+cnn + data Augmetation
+----------------------------------------
+RELATÓRIO DE CLASSIFICAÇÃO
+----------------------------------------
+              precision    recall  f1-score   support
+
+           0       0.95      0.99      0.97       294
+           1       0.40      0.12      0.19        16
+
+    accuracy                           0.95       310
+   macro avg       0.68      0.56      0.58       310
+weighted avg       0.93      0.95      0.93       310
+
+MATRIZ DE CONFUSÃO
+[[291   3]
+ [ 14   2]]
+  TN=291  FP=3  FN=14  TP=2
+
+Acurácia : 0.9452
+F1-Score : 0.1905
+Calculando métricas com 1000 amostras de bootstrap (seed=42)...
+
+MÉTRICAS COM IC 95%
+      Metric  Value  CI Lower  CI Upper
+       AUROC 0.8091    0.6932    0.9094
+       AUPRC 0.2743    0.1073    0.4829
+PPV@90Recall 0.0794    0.0450    0.2167
+
+CNN + DA + BATCH 
+----------------------------------------
+RELATÓRIO DE CLASSIFICAÇÃO
+----------------------------------------
+              precision    recall  f1-score   support
+
+           0       0.98      0.91      0.95       294
+           1       0.29      0.62      0.39        16
+
+    accuracy                           0.90       310
+   macro avg       0.63      0.77      0.67       310
+weighted avg       0.94      0.90      0.92       310
+
+MATRIZ DE CONFUSÃO
+[[269  25]
+ [  6  10]]
+  TN=269  FP=25  FN=6  TP=10
+
+Acurácia : 0.9000
+F1-Score : 0.3922
+Calculando métricas com 1000 amostras de bootstrap (seed=42)...
+
+MÉTRICAS COM IC 95%
+      Metric  Value  CI Lower  CI Upper
+       AUROC 0.7910    0.6351    0.9264
+       AUPRC 0.2917    0.1265    0.5195
+PPV@90Recall 0.0558    0.0323    0.2891
+
+==================================================
+RESUMO DOS TREINOS CNN
+==================================================
+CNN S1 — épocas: 6   | melhor val_loss: 0.5166 | parou por: EarlyStopping
+CNN S2 — épocas: 6   | melhor val_loss: 0.2804 | parou por: EarlyStopping
+CNN S3 — épocas: 10  | melhor val_loss: 0.4384 | parou por: limite de epochs
+
+==================================================
+AMBIENTE
+==================================================
+TensorFlow : 2.20.0
+GPU        : [PhysicalDevice(name='/physical_device:GPU:0', device_type='GPU')]
+Parâmetros treináveis — S1: 23,907,521
+
+Arquivos salvos com sucesso.
